@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { curriculum, dayNumberFromStart, PATHS, tone } from "@/lib/curriculum";
+import { publicFile } from "@/lib/public-path";
 import { useDesk } from "@/components/progress-provider";
 
 export default function HomePage() {
@@ -21,7 +22,9 @@ export default function HomePage() {
     <div className="space-y-10">
       <section className="grid gap-8 border-b border-[#e4d9c8] pb-10 md:grid-cols-[1.4fr_0.8fr]">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-[#c56a12]">Field notes for the loop</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-[#c56a12]">
+            {desk.userName}&apos;s desk
+          </p>
           <h1 className="mt-3 max-w-xl text-5xl leading-[0.95] text-[#1e2a32] md:text-6xl">
             Prepare for SDE-2, and learn the AI you will be asked to ship.
           </h1>
@@ -35,7 +38,7 @@ export default function HomePage() {
               <Link href="/plan">Open today&apos;s row</Link>
             </Button>
             <Button asChild variant="outline" className="h-10 rounded-full bg-white px-4">
-              <a href="/Meridian-SDE2-AI-Roadmap.xlsx">Download the workbook</a>
+              <a href={publicFile("/Meridian-SDE2-AI-Roadmap.xlsx")}>Download the workbook</a>
             </Button>
           </div>
         </div>
@@ -167,7 +170,7 @@ export default function HomePage() {
               formulas, and an application tracker. Status cells are dropdowns.
             </p>
             <Button asChild variant="secondary" className="mt-4 h-10 rounded-full px-4">
-              <a href="/Meridian-SDE2-AI-Roadmap.xlsx">Meridian-SDE2-AI-Roadmap.xlsx</a>
+              <a href={publicFile("/Meridian-SDE2-AI-Roadmap.xlsx")}>Meridian-SDE2-AI-Roadmap.xlsx</a>
             </Button>
           </div>
         </div>

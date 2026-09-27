@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import type { PathId } from "@/lib/curriculum";
+import type { CoachAction } from "@/lib/coach";
+import { USERS, userName, type UserId } from "@/lib/users";
 
 export type DayLog = {
   status: "Not started" | "Light" | "In progress" | "Done" | "Redo" | "Skipped";
@@ -25,6 +27,14 @@ export type StoryLog = {
   status: DayLog["status"];
 };
 
+export type ChatMessage = {
+  role: "user" | "coach";
+  text: string;
+  link?: { href: string; label: string };
+  action?: CoachAction;
+  quizAnswer?: string;
+};
+
 type DeskState = {
   path: PathId;
   start: string;
@@ -32,6 +42,7 @@ type DeskState = {
   topics: Record<string, { status: DayLog["status"]; confidence: number }>;
   stories: Record<string, StoryLog>;
   projects: Record<string, DayLog["status"]>;
+  messages: ChatMessage[];
 };
 
 const EMPTY: DeskState = {
@@ -41,18 +52,44 @@ const EMPTY: DeskState = {
   topics: {},
   stories: {},
   projects: {},
+  messages: [],
 };
 
-const KEY = "meridian-desk-v1";
+const LEGACY_KEY = "meridian-desk-v1";
+const USER_KEY = "meridian-user";
+
+function storageKey(user: UserId) {
+  return `meridian-desk-v2:${user}`;
+}
+
+function loadDesk(user: UserId): DeskState {
+  try {
+    const raw = localStorage.getItem(storageKey(user));
+    if (raw) return { ...EMPTY, ...JSON.parse(raw) };
+    if (user === "revanth") {
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) return { ...EMPTY, ...JSON.parse(legacy), messages: [] };
+    }
+  } catch {
+    /* keep defaults */
+  }
+  return { ...EMPTY, messages: [] };
+}
 
 type DeskContextValue = DeskState & {
   ready: boolean;
+  user: UserId;
+  userName: string;
+  users: typeof USERS;
+  setUser: (user: UserId) => void;
   setPath: (path: PathId) => void;
   setStart: (start: string) => void;
   setDay: (day: number, patch: Partial<DayLog>) => void;
   setTopic: (id: number, patch: Partial<DeskState["topics"][string]>) => void;
   setStory: (id: string, patch: Partial<StoryLog>) => void;
   setProject: (name: string, status: DayLog["status"]) => void;
+  addMessage: (message: ChatMessage) => void;
+  clearMessages: () => void;
   exportProgress: () => void;
 };
 
@@ -63,31 +100,38 @@ function blankDay(): DayLog {
 }
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
+  const [user, setUserState] = useState<UserId>("revanth");
   const [state, setState] = useState<DeskState>(EMPTY);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as DeskState;
-        setState({ ...EMPTY, ...parsed });
-      }
-    } catch {
-      /* keep defaults */
-    }
+    const saved = localStorage.getItem(USER_KEY);
+    const next: UserId = saved === "anjali" ? "anjali" : "revanth";
+    setUserState(next);
+    setState(loadDesk(next));
     setReady(true);
   }, []);
 
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }, [state, ready]);
+    localStorage.setItem(storageKey(user), JSON.stringify(state));
+    localStorage.setItem(USER_KEY, user);
+  }, [state, user, ready]);
 
   const value = useMemo<DeskContextValue>(() => {
     return {
       ...state,
       ready,
+      user,
+      userName: userName(user),
+      users: USERS,
+      setUser: (next) => {
+        if (next === user) return;
+        localStorage.setItem(storageKey(user), JSON.stringify(state));
+        localStorage.setItem(USER_KEY, next);
+        setUserState(next);
+        setState(loadDesk(next));
+      },
       setPath: (path) => setState((s) => ({ ...s, path })),
       setStart: (start) => setState((s) => ({ ...s, start })),
       setDay: (day, patch) =>
@@ -131,6 +175,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         })),
       setProject: (name, status) =>
         setState((s) => ({ ...s, projects: { ...s.projects, [name]: status } })),
+      addMessage: (message) =>
+        setState((s) => ({ ...s, messages: [...s.messages, message].slice(-40) })),
+      clearMessages: () => setState((s) => ({ ...s, messages: [] })),
       exportProgress: () => {
         const blob = new Blob([JSON.stringify(state, null, 2)], {
           type: "application/json",
@@ -143,7 +190,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         URL.revokeObjectURL(url);
       },
     };
-  }, [state, ready]);
+  }, [state, ready, user]);
 
   return <DeskContext.Provider value={value}>{children}</DeskContext.Provider>;
 }

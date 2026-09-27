@@ -18,6 +18,20 @@ npm run dev
 
 Open [http://127.0.0.1:43123](http://127.0.0.1:43123).
 
+The header has a student menu for **Revanth** and **Anjali**. Each name keeps its own start date, path, daily status, stories, and doubt chat in that browser. Switch names and you are on the other desk.
+
+The Doubts page answers from this plan: today's row, the topic library, company loops, and the cheat sheets. It also quizzes you and can mark today Light or Done. It does not call an external model, so the desk still works as a static site.
+
+## Always-on link
+
+GitHub does not keep a Node server running for a normal repository. The always-available form of this desk is a static export on GitHub Pages, at:
+
+`https://revanthkumarreddy.github.io/meridian/`
+
+Pushing `main` to a repository named `meridian` under `revanthkumarreddy` runs `.github/workflows/pages.yml`, which builds with `GITHUB_PAGES=true` and `NEXT_PUBLIC_BASE_PATH=/meridian`. In the repository settings, allow GitHub Actions to deploy to Pages (Settings → Pages → Source: GitHub Actions).
+
+Progress and chat stay in each browser. Two people on two phones do not see each other's notes, because a static site has no shared database. That is what keeps the link up without a paid server.
+
 Download the workbook from the desk, or open `public/Meridian-SDE2-AI-Roadmap.xlsx`.
 
 ## How to use the plan
