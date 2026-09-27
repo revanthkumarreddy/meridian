@@ -70,7 +70,7 @@ export default function MapPage() {
                 </p>
                 <p className="text-[#1e2a32]">{day.theme}</p>
               </div>
-              <Link href="/plan" className="text-sm text-[#c56a12]">
+              <Link href={`/plan?day=${day.day}`} className="text-sm text-[#c56a12]">
                 Open in the daily desk
               </Link>
             </li>
